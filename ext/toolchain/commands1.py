@@ -828,7 +828,8 @@ class InternalCommands:
 						if dir.startswith("Qt"):
 							self.try_chdir(target + "/" + dir +"/Versions")
 							self.symlink("5", "Current")
-							self.move("../Resources", "5")
+							if not os.path.exists("5/Resources"):
+								self.move("../Resources", "5")
 							self.restore_chdir()
 
 							self.try_chdir(target + "/" + dir)
@@ -875,7 +876,7 @@ class InternalCommands:
 				frameworkRootDir = "/Library/Frameworks"
 			else:
 				# TODO: auto-detect, qt can now be installed anywhere.
-				frameworkRootDir = "/Developer/Qt5.2.1/5.2.1/clang_64/lib"
+				frameworkRootDir = "/usr/local/Cellar/qt5/5.6.0/lib"
 			
 			target = dir + "/Synergy.app/Contents/Frameworks"
 
@@ -883,9 +884,14 @@ class InternalCommands:
 			for root, dirs, files in os.walk(target):
 				for dir in dirs:
 					if dir.startswith("Qt"):
-						shutil.copy(
-							frameworkRootDir + "/" + dir + "/Contents/Info.plist",
-							target + "/" + dir + "/Resources/")
+						info_plist_file = os.path.join(frameworkRootDir,
+						                               dir,
+						                               "Contents/Info.plist")
+						destdir = os.path.join(target, dir, "Resources/")
+
+						if not os.path.exists(os.path.join(destdir, "Info.plist")):
+							print "Copying {} to {}".format(info_plist_file, destdir)
+							shutil.copy(info_plist_file, destdir)
 
 	def signmac(self):
 		self.loadConfig()
